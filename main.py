@@ -6,7 +6,8 @@ from fontTools.ttLib import TTFont
 from fontTools.pens.transformPen import TransformPointPen
 from fontTools.misc.transform import Identity
 import json
-from glyph_overrides import overrides
+from sq_overrides import sq_overrides
+from extra_private_use import extra_private_use
 from constants import *
 
 
@@ -30,17 +31,25 @@ font.info.ascender = FONT_ACTUAL_ASCENDER
 font.info.descender = FONT_ACTUAL_DESCENDER
 font.info.openTypeOS2TypoLineGap = FONT_LINE_GAP
 
-next_private_codepoint = 0xE000
+next_private_codepoint = PRIVATE_USE_AREA[0]
 font_lut = {}
 
-sq_font = TTFont("OpenSquare.ttf")
+
+def assign_private_codepoint(glyph_name):
+    global next_private_codepoint
+    font[glyph_name].unicodes.append(next_private_codepoint)
+    font_lut[glyph_name] = ord2utf8str(next_private_codepoint)
+    next_private_codepoint += 1
+
+
+sq_font = TTFont("source_assets/OpenSquare.ttf")
 sq_head = sq_font["head"]
 sq_units_per_em = sq_head.unitsPerEm
 sq_glyph_set = sq_font.getGlyphSet()
 sq_cmap = sq_font.getBestCmap() or {}
 sq_scale = FONT_EM / sq_units_per_em
 
-overrides_dir = vars(overrides)
+overrides_dir = vars(sq_overrides)
 for codepoint, name in sq_cmap.items():
     if name in overrides_dir:
         overrides_dir[name](font.newGlyph(name))
@@ -58,13 +67,13 @@ for codepoint, name in sq_cmap.items():
 
 sq_font.close()
 
-with open("bootstrap-icons.json", "r") as f:
+with open("source_assets/bootstrap-icons.json", "r") as f:
     bs_original_lut = json.load(f)
 bs_ord2codename: dict[int, str] = {
     utf8str2ord(value): key for key, value in bs_original_lut.items()
 }
 
-bs_font = TTFont("bootstrap-icons.ttf")
+bs_font = TTFont("source_assets/bootstrap-icons.ttf")
 bs_head = bs_font["head"]
 bs_units_per_em = bs_head.unitsPerEm
 bs_glyph_set = bs_font.getGlyphSet()
@@ -80,7 +89,7 @@ for codepoint, name in bs_cmap.items():
     if glyph_name in font:
         glyph_name = BS_PREFIX + glyph_name
         if glyph_name in font:
-            print("bootstrap name collision", glyph_name)
+            print("warning: bootstrap name collision", glyph_name)
             continue
 
     dst = font.newGlyph(glyph_name)
@@ -95,20 +104,18 @@ for codepoint, name in bs_cmap.items():
     dst_pen2 = TransformPointPen(dst_pen, transform)
     bs_glyph_set[name].drawPoints(dst_pen2)
 
-    font[glyph_name].unicodes.append(next_private_codepoint)
-    font_lut[glyph_name] = ord2utf8str(next_private_codepoint)
-    next_private_codepoint += 1
+    assign_private_codepoint(glyph_name)
 
 bs_font.close()
 
 
-with open("promptfont-glyphs.json", "r") as f:
+with open("source_assets/promptfont-glyphs.json", "r") as f:
     pf_original_list = json.load(f)
 pf_ord2codename: dict[int, str] = {
     d["codepoint"]: d["code-name"] for d in pf_original_list
 }
 
-pf_font = TTFont("promptfont.ttf")
+pf_font = TTFont("source_assets/promptfont.ttf")
 pf_head = pf_font["head"]
 pf_units_per_em = pf_head.unitsPerEm
 pf_glyph_set = pf_font.getGlyphSet()
@@ -121,7 +128,7 @@ for codepoint, name in pf_cmap.items():
     if glyph_name in font:
         glyph_name = PF_PREFIX + glyph_name
         if glyph_name in font:
-            print("bootstrap name collision", glyph_name)
+            print("warning: promptfont name collision", glyph_name)
             continue
 
     dst = font.newGlyph(glyph_name)
@@ -131,16 +138,22 @@ for codepoint, name in pf_cmap.items():
     dst_pen = dst.getPointPen()
     pf_glyph_set[name].drawPoints(dst_pen)
 
-    font[glyph_name].unicodes.append(next_private_codepoint)
-    font_lut[glyph_name] = ord2utf8str(next_private_codepoint)
-    next_private_codepoint += 1
+    assign_private_codepoint(glyph_name)
 
 pf_font.close()
 
+
+for glyph_name, generator in extra_private_use.items():
+    if glyph_name in font:
+        print("warning: extra_private_use name collision", glyph_name)
+        continue
+    generator(font.newGlyph(glyph_name))
+    assign_private_codepoint(glyph_name)
+
 # Compile and save as TTF
 ttf = compileTTF(font)
-ttf.save("open-pentagon.ttf")
+ttf.save("out/open-pentagon.ttf")
 
 # Save the new lut
-with open("open-pentagon.json", "w+") as f:
+with open("out/open-pentagon.json", "w+") as f:
     f.write(json.dumps(font_lut, indent=4))
