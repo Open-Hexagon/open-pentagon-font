@@ -64,6 +64,7 @@ for codepoint, name in sq_cmap.items():
         sq_glyph_set[name].drawPoints(dst_pen2)
 
     font[name].unicodes.append(codepoint)
+    font_lut[name] = ord2utf8str(codepoint)
 
 sq_font.close()
 
