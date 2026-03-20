@@ -132,12 +132,15 @@ for codepoint, name in pf_cmap.items():
             print("warning: promptfont name collision", glyph_name)
             continue
 
-    dst = font.newGlyph(glyph_name)
     src_width, _ = pf_font["hmtx"][name]
-    dst.width = src_width
+
+    dst = font.newGlyph(glyph_name)
+    dst.width = FONT_ACTUAL_HEIGHT
 
     dst_pen = dst.getPointPen()
-    pf_glyph_set[name].drawPoints(dst_pen)
+    transform = Identity.translate((FONT_ACTUAL_HEIGHT - src_width) / 2, 0)
+    dst_pen2 = TransformPointPen(dst_pen, transform)
+    pf_glyph_set[name].drawPoints(dst_pen2)
 
     assign_private_codepoint(glyph_name)
 

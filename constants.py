@@ -15,6 +15,7 @@ FONT_ACTUAL_HEIGHT = FONT_ACTUAL_ASCENDER - FONT_ACTUAL_DESCENDER
 # This value is used to space out lines.
 # Love2D adds this value to the height.
 # The the gap is inserted at the top of each line above the characters
+# We make this 0 so characters can have equal spacing above and below
 FONT_LINE_GAP = 0
 
 #

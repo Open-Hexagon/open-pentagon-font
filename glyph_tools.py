@@ -173,11 +173,12 @@ def get_glyph_generator(contours: contour_list_t, width):
     return gen
 
 
-C_LEFT_PAD = 60
-C_RIGHT_PAD = 60
-C_CHAR_WIDTH = 480
-C_CHAR_HEIGHT = 640
-C_LINE_WIDTH = 110
+C_LEFT_PAD = 60  # empty space to left of characters
+C_RIGHT_PAD = 60  # empty space to right of characters
+C_CHAR_WIDTH = 480  # width of characters
+assert FONT_ACTUAL_HEIGHT / 2 == C_LEFT_PAD + C_RIGHT_PAD + C_CHAR_WIDTH
+C_CHAR_HEIGHT = 640  # char height above baseline
+C_LINE_WIDTH = 110  # line stroke width for characters
 C_HALF_LINE_WIDTH = C_LINE_WIDTH / 2
 C_GLYPH_WIDTH = C_LEFT_PAD + C_RIGHT_PAD + C_CHAR_WIDTH
 C_LEFT = C_LEFT_PAD
